@@ -1,13 +1,7 @@
 import React, { Component } from 'react';
 import { DataGrid, LoadingBar } from '../Components';
-import Heading from 'grommet/components/Heading';
-import Button from 'grommet/components/Button';
-import Box from 'grommet/components/Box';
-import Label from 'grommet/components/Label';
-import CaretNext from 'grommet/components/icons/base/CaretNext';
-import CaretPrevious from 'grommet/components/icons/base/CaretPrevious';
-// import ChapterNext from 'grommet/components/icons/base/ChapterNext';
-// import ChapterPrevious from 'grommet/components/icons/base/ChapterPrevious';
+import { Row } from 'react-bootstrap';
+
 import Promise from 'es6-promise';
 import { getTable, select} from '../api';
 
@@ -98,19 +92,27 @@ class GridView extends Component {
         const { schema, items, isFetching, totalItemsCount, pageSize } = this.state;
         const totalPages = Math.trunc((totalItemsCount + pageSize - 1) / pageSize);
         return (
-            <Box>
-                <Heading>{schema && schema.title ? schema.title : this.props.routeParams.table}</Heading>
-                {isFetching && <LoadingBar />}
-                {totalItemsCount === 0 && <p>No Data</p>}
-                {!isFetching && totalItemsCount > 0 && <div>
-                    <DataGrid schema={schema} items={items}
-                              onEditClick={() => {}}
-                              onDeleteClick={() => {}} />
-                    <Button onClick={this.prevPage.bind(this)} icon={<CaretPrevious />} />
-                    <Label>{this.state.currentPage} / {totalPages}</Label>
-                    <Button onClick={this.nextPage.bind(this)} icon={<CaretNext />} />
-                </div>}
-            </Box>
+            <div className="content-wrapper">
+                {/* Content Header (Page header) */}
+                <section className="content-header">
+                    <h1>{schema && schema.title ? schema.title : this.props.routeParams.table}</h1>
+                </section>
+                {/* Main content */}
+                <section className="content">
+                    <Row>
+                        {isFetching && <LoadingBar />}
+                        {totalItemsCount === 0 && <p>No Data</p>}
+                        {!isFetching && totalItemsCount > 0 && <div>
+                            <DataGrid schema={schema} items={items}
+                                      onEditClick={() => {}}
+                                      onDeleteClick={() => {}} />
+                            {/*<Button onClick={this.prevPage.bind(this)} icon={<CaretPrevious />} />*/}
+                            <p>{this.state.currentPage} / {totalPages}</p>
+                            {/*<Button onClick={this.nextPage.bind(this)} icon={<CaretNext />} />*/}
+                        </div>}
+                    </Row>
+                </section>
+            </div>
         );
     }
 }

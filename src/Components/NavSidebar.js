@@ -1,15 +1,6 @@
 import React, {Component, PropTypes} from 'react';
-
-import Sidebar from 'grommet/components/Sidebar';
-import Header from 'grommet/components/Header';
-import Search from 'grommet/components/Search';
-import Menu from 'grommet/components/Menu';
-import Title from 'grommet/components/Title';
-
-import HomeIcon from 'grommet/components/icons/base/Home';
-import ConfigurationIcon from 'grommet/components/icons/base/Configuration';
-import TableIcon from 'grommet/components/icons/base/Table';
-
+import {FormControl, InputGroup, Button} from 'react-bootstrap';
+import FontAwesome from 'react-fontawesome';
 import {Link} from 'react-router';
 
 import { LoadingBar } from './index';
@@ -19,51 +10,63 @@ import './Components.css';
 
 class NavSidebar extends Component {
 
+    static PropTypes = {
+        tables: PropTypes.arrayOf(PropTypes.shape({
+            name: React.PropTypes.string,
+            title: React.PropTypes.string
+        }))
+    };
+
     render() {
-        const { tables }  = this.props;
+        const { tables = [] }  = this.props;
         const filter = this.state && this.state.filter;
-        const onSearchDomChange = (e) => {
+        const onSearchChange = (e) => {
             this.setState({filter: e.target.value})
         };
 
-        // {icon}
-        const MenuRow = ({to, icon, title}) => (
-            <Link to={to} activeClassName="active">
-                <span className="NavSidebar-item-text">{title}</span>
-            </Link>
-        );
-
         return (
-            <Sidebar size="small" colorIndex="neutral-1" fixed={true} separator="right">
-                <Header large={true} justify="between" pad={{horizontal: 'medium'}}>
-                    <Title>Scaffolder</Title>
-                </Header>
-                <Header small={true} justify="between" pad={{horizontal: 'medium'}}>
-                    <Search inline={true} placeHolder="filter tables" onDOMChange={onSearchDomChange} fill={true} />
-                </Header>
+            <aside className="main-sidebar">
+                {/* sidebar: style can be found in sidebar.less */}
+                <section className="sidebar">
+                    {/* search form */}
+                    <form className="sidebar-form">
+                        <InputGroup>
+                            <FormControl type="text" name="q" onChange={onSearchChange} placeholder="Search..." />
+                            <InputGroup.Button>
+                                <Button className="btn btn-flat"><FontAwesome name="search" /></Button>
+                            </InputGroup.Button>
+                        </InputGroup>
+                    </form>
+                    <ul className="sidebar-menu">
+                        <li className="header">MAIN NAVIGATION</li>
+                        <li className="active">
+                            <Link to="/">
+                                <FontAwesome name="dashboard" />
+                                <span>Home</span>
+                            </Link>
+                        </li>
+                        <li className="active">
+                            <Link to="/administration">
+                                <FontAwesome name="Administration" />
+                                <span>Administration</span>
+                            </Link>
+                        </li>
+                        <li className="header">Tables</li>
+                        {!tables.length && <LoadingBar />}
+                        {(tables)
+                            .filter(table => !filter || table.title.search(new RegExp(filter, 'i')) >= 0)
+                            .map(table => (
+                                <li key={table.name}>
+                                    <Link to={`/grid/${table.name}`}><FontAwesome name="table" /><span>{table.title}</span></Link>
+                                </li>
+                            ))
+                        }
 
-                <Menu primary={true}>
-                    <MenuRow to="/" icon={<HomeIcon/>} title="Home" />
-                    <MenuRow to="/administration" icon={<ConfigurationIcon/>} title="Administration" />
-                    <div className="NavSidebar-heading">tables</div>
-                    {!tables.length && <LoadingBar />}
-                    {tables
-                        .filter(table => !filter || table.title.search(new RegExp(filter, 'i')) >= 0)
-                        .map(table => (
-                            <MenuRow key={table.name} icon={<TableIcon />} to={`/grid/${table.name}`} title={table.title} />
-                        ))
-                    }
-                </Menu>
-            </Sidebar>
+                    </ul>
+                </section>
+            </aside>
         )
     }
 }
-
-NavSidebar.PropTypes = {
-    tables: PropTypes.arrayOf(PropTypes.shape({
-        name: React.PropTypes.string,
-        title: React.PropTypes.string
-    }))
-};
 
 export default NavSidebar;
