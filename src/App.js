@@ -15,6 +15,7 @@ class App extends Component {
     state = {
         isFetching: false,
         tables: [],
+        navCollapsed: false,
     };
 
     componentDidMount() {
@@ -26,18 +27,18 @@ class App extends Component {
 
     render() {
         return (
-            <div className="wrapper" style={{overflow: 'visible'}}>
+            <div className={this.state.navCollapsed ? 'wrapper sidebar-mini sidebar-collapse' : 'wrapper'} style={{overflow: 'visible'}}>
                 <header className="main-header">
                     {/* Logo */}
                     <Link to="/" className="logo">
                         {/* mini logo for sidebar mini 50x50 pixels */}
-                        <span className="logo-mini">Scaffolder</span>
+                        <span className="logo-mini">Sca</span>
                         {/* logo for regular state and mobile devices */}
                         <span className="logo-lg">Scaffolder</span>
                     </Link>
                     <Navbar staticTop={true} fluid={true}>
                         <Nav>
-                            <NavItem>
+                            <NavItem onClick={() => this.setState({navCollapsed: !this.state.navCollapsed})}>
                                 <FontAwesome name="bars" />
                             </NavItem>
                         </Nav>
@@ -50,7 +51,7 @@ class App extends Component {
                     {/*</nav>*/}
                 </header>
                 {/* Left side column. contains the logo and sidebar */}
-                <NavSidebar tables={this.state.tables}/>
+                <NavSidebar tables={this.state.tables} />
                 {/* Content Wrapper. Contains page content */}
 
                 {this.props.children || <div className="content-wrapper" style={{minHeight: 500}}>Nothig Here</div>}
@@ -69,17 +70,3 @@ class App extends Component {
 
 
 export default App;
-
-
-    // render() {
-        //     return (
-        //         <GrommetApp centered={false}>
-        //             <Split flex="right">
-        //                 <NavSidebar tables={this.state.tables} />
-        //                 <Article full={true} pad="medium">
-        //                     {this.props.children}
-        //                 </Article>
-        //             </Split>
-        //         </GrommetApp>
-        //     )
-        // }

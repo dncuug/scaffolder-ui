@@ -3,7 +3,14 @@ import ReactDOM from 'react-dom';
 import { Router, Route, browserHistory } from 'react-router'
 import App from './App';
 import { GridView } from './Containers';
+
+import 'bootstrap.native';
+
+import './AdminLTE.css';
+import './AdminLTE-override.css';
+import './skin-blue.css';
 import './index.css';
+
 
 const NotFound = () => <h2>Not found</h2>;
 

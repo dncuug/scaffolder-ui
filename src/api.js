@@ -52,8 +52,8 @@ export function getTable(name) {
 }
 
 
-export function select(table, filter=[]) {
-    const params = `?tableName=${table}` + Object.keys(filter).map(key => `${key}:${params[key]}`).join('&');
+export function select(table, filter) {
+    const params = `?tableName=${table}&` + Object.keys(filter || {}).map(key => `${key}=${filter[key]}`).join('&');
     return defaultGet('/data' + params)
 }
 
@@ -76,12 +76,16 @@ export function insert(table, entity) {
 export function update(table, entity) {
 
     const payload = {
-        tableName: table.name,
+        tableName: table,
         entity
     };
+    const headers = new Headers({
+        'Content-Type': 'application/json',
+    });
 
     return fetch(absoluteUrl('/data'), {
             method: "PUT",
+            headers,
             body: JSON.stringify(payload)
         })
         .then(checkStatus)

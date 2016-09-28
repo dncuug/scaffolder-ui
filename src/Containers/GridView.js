@@ -1,9 +1,10 @@
 import React, { Component } from 'react';
 import { DataGrid, LoadingBar } from '../Components';
-import { Row } from 'react-bootstrap';
+import { Grid, Row, Col } from 'react-bootstrap';
 
 import Promise from 'es6-promise';
-import { getTable, select} from '../api';
+import { getTable, select, remove, update} from '../api';
+import {getSchemaKey} from "../utils";
 
 const makeCancelable = (promise) => {
     let _hasCanceled = false;
@@ -21,16 +22,29 @@ const makeCancelable = (promise) => {
     };
 };
 
+const NoData = () => (
+    <div className="box-header">
+        <h3 className="box-title">No Data</h3>
+    </div>
+);
+
 class GridView extends Component {
+
+    state = {
+        isFetching: false,
+        schema: {},
+        items: [],
+        totalItemsCount: 0
+    };
 
     constructor(props) {
         super(props);
-        this.state = {
-            isFetching: false,
-            schema: {},
-            items: [],
-            totalItemsCount: 0
-        };
+        this.onEditClick = this.onEditClick.bind(this);
+        this.onCellEdit = this.onCellEdit.bind(this);
+        this.onPageChange = this.onPageChange.bind(this);
+        this.onSortChange = this.onSortChange.bind(this);
+        this.onFilterChange = this.onFilterChange.bind(this);
+        this.onSizePerPageList = this.onSizePerPageList.bind(this);
     }
 
     componentDidMount() {
@@ -71,26 +85,86 @@ class GridView extends Component {
         }
     }
 
-    prevPage() {
-        if (this.state.currentPage > 0) {
-            this.fetchMoreData({currentPage: this.state.currentPage - 1})
-        }
-    }
-    nextPage() {
-        const {totalItemsCount, pageSize } = this.state;
-        const totalPages = Math.trunc((totalItemsCount + pageSize - 1) / pageSize);
-        if (this.state.currentPage < totalPages - 1) {
-            this.fetchMoreData({currentPage: this.state.currentPage + 1})
-        }
-    }
-
     componentWillUnmount() {
         this.cancelRequest();
     }
 
+    onDeleteRow(ids) {
+        const promises = ids.map(id => remove(this.state.schema.name, id));
+        const keyField = getSchemaKey(this.props.schema);
+        Promise.all(promises).then(() => {
+            this.setState({
+                items: this.state.items.filter(item => ids.indexOf(item[keyField]) > -1),
+                totalItemsCount: this.state.totalItemsCount - ids.length
+            });
+        })
+    }
+
+    onPageChange(pageIndex, pageSize) {
+        this.setState({isFetching: true});
+        select(this.state.schema.name, {
+            sortColumn: this.state.sortColumn || '',
+            sortOrder: this.state.sortOrder | '',
+            currentPage: pageIndex,
+            pageSize
+        }).then(response => {
+            this.setState({
+                ...response,
+                isFetching: false
+            })
+        })
+    }
+
+    onSortChange(sortName, sortOrder) {
+        this.setState({isFetching: true});
+        select(this.state.schema.name, {
+            currentPage: 1,
+            sortColumn: sortName,
+            sortOrder
+        }).then(response => {
+            console.log(response);
+            this.setState({
+                ...response,
+                sortColumn: sortName,
+                sortOrder: sortOrder,
+                isFetching: false
+            })
+        })
+    }
+
+    onSizePerPageList(pageIndex, pageSize) {
+        // todo: for future use
+    }
+
+    onFilterChange() {
+        // todo: for future use
+    }
+
+    onEditClick(id) {
+        this.props.history.push(`/detail/${id}`);
+    }
+
+    onCellEdit(entity, colName, value) {
+        const keyField = getSchemaKey(this.props.schema);
+        const entityId = entity[keyField];
+        const updatedEntity = {
+            [keyField]: entityId,
+            [colName]: value
+        };
+        update(this.state.schema.name, updatedEntity).then(() => {
+            const newItems = this.state.items.map(item => {
+                if (item[keyField] === entityId) {
+                    item[colName] = value;
+                }
+                return item;
+            });
+            this.setState({items: newItems})
+        })
+    }
+
     render() {
-        const { schema, items, isFetching, totalItemsCount, pageSize } = this.state;
-        const totalPages = Math.trunc((totalItemsCount + pageSize - 1) / pageSize);
+        const { schema, isFetching, totalItemsCount } = this.state;
+
         return (
             <div className="content-wrapper">
                 {/* Content Header (Page header) */}
@@ -98,20 +172,30 @@ class GridView extends Component {
                     <h1>{schema && schema.title ? schema.title : this.props.routeParams.table}</h1>
                 </section>
                 {/* Main content */}
-                <section className="content">
-                    <Row>
-                        {isFetching && <LoadingBar />}
-                        {totalItemsCount === 0 && <p>No Data</p>}
-                        {!isFetching && totalItemsCount > 0 && <div>
-                            <DataGrid schema={schema} items={items}
-                                      onEditClick={() => {}}
-                                      onDeleteClick={() => {}} />
-                            {/*<Button onClick={this.prevPage.bind(this)} icon={<CaretPrevious />} />*/}
-                            <p>{this.state.currentPage} / {totalPages}</p>
-                            {/*<Button onClick={this.nextPage.bind(this)} icon={<CaretNext />} />*/}
-                        </div>}
-                    </Row>
-                </section>
+                <div className="content">
+                    <Grid fluid={true}>
+                        <Row>
+                            <Col xs={12}>
+                                <div className="box">
+                                    {isFetching && <LoadingBar />}
+                                    {totalItemsCount === 0 ? <NoData /> : (
+                                        <div className="box-body">
+                                            <DataGrid {...this.state}
+                                                      onEditClick={this.onEditClick}
+                                                      onDeleteRow={this.onDeleteRow}
+                                                      onCellEdit={this.onCellEdit}
+                                                      onPageChange={this.onPageChange}
+                                                      onSortChange={this.onSortChange}
+                                                      onFilterChange={this.onFilterChange}
+                                                      onSizePerPageList={this.onSizePerPageList}
+                                            />
+                                        </div>
+                                    )}
+                                </div>
+                            </Col>
+                        </Row>
+                    </Grid>
+                </div>
             </div>
         );
     }
