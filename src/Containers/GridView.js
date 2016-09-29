@@ -83,7 +83,11 @@ class GridView extends Component {
     onDeleteRow(ids) {
         const {schema} = this.state;
         const promises = ids.map(id => remove(schema.name, id));
+        const timeout = setTimeout(() => {
+            this.setState({isFetching: true})
+        }, 500);
         Promise.all(promises).then(() => {
+            clearTimeout(timeout);
             const keyField = getSchemaKey(schema);
             this.setState({
                 items: this.state.items.filter(item => ids.indexOf(item[keyField]) > -1),
@@ -93,13 +97,16 @@ class GridView extends Component {
     }
 
     onPageChange(pageIndex, pageSize) {
-        this.setState({isFetching: true});
+        const timeout = setTimeout(() => {
+            this.setState({isFetching: true})
+        }, 500);
         select(this.state.schema.name, {
             sortColumn: this.state.sortColumn || '',
             sortOrder: this.state.sortOrder === 'desc' ? 1 : 0,
             currentPage: pageIndex,
             pageSize
         }).then(response => {
+            clearTimeout(timeout);
             this.setState({
                 ...response,
                 isFetching: false
@@ -108,12 +115,15 @@ class GridView extends Component {
     }
 
     onSortChange(sortName, sortOrder) {
-        this.setState({isFetching: true});
+        const timeout = setTimeout(() => {
+            this.setState({isFetching: true})
+        }, 500);
         select(this.state.schema.name, {
             currentPage: 1,
             sortColumn: sortName,
             sortOrder: sortOrder === 'desc' ? 1 : 0,
         }).then(response => {
+            clearTimeout(timeout);
             this.setState({
                 ...response,
                 sortColumn: sortName,
@@ -134,6 +144,9 @@ class GridView extends Component {
     onEditClick(id) {
         // this.props.history.push(`/detail/${id}`);
         const keyField = getSchemaKey(this.state.schema);
+        const timeout = setTimeout(() => {
+            this.setState({isFetching: true})
+        }, 500);
         select(this.state.schema.name, {
             detailMode: true,
             Parameters: JSON.stringify({
@@ -141,7 +154,8 @@ class GridView extends Component {
                 [keyField]: id
             })
         }).then(response => {
-            this.setState({editEntity: response.items[0]})
+            clearTimeout(timeout);
+            this.setState({editEntity: response.items[0], isFetching: false})
         });
     }
 
@@ -152,6 +166,9 @@ class GridView extends Component {
             [keyField]: entityId,
             [colName]: value
         };
+        const timeout = setTimeout(() => {
+            this.setState({isFetching: true})
+        }, 500);
         update(this.state.schema.name, updatedEntity).then(() => {
             const newItems = this.state.items.map(item => {
                 if (item[keyField] === entityId) {
@@ -159,18 +176,23 @@ class GridView extends Component {
                 }
                 return item;
             });
-            this.setState({items: newItems})
+            clearTimeout(timeout);
+            this.setState({items: newItems, isFetching: false})
         })
     }
 
     onEditorSaveClick(data) {
         const keyField = getSchemaKey(this.state.schema);
         const entityId = data[keyField];
+        const timeout = setTimeout(() => {
+            this.setState({isFetching: true})
+        }, 500);
         update(this.state.schema.name, data).then(() => {
             const newItems = this.state.items.map(item => {
                 return item[keyField] === entityId ? data : item;
             });
-            this.setState({items: newItems, editEntity: null})
+            clearTimeout(timeout);
+            this.setState({items: newItems, editEntity: null, isFetching: false})
         });
     }
 
@@ -195,7 +217,7 @@ class GridView extends Component {
         };
 
         return (
-            <div className="content-wrapper">
+            <div className="content-wrapper" style={{minHeight: 'calc(100vh - 5vw)'}}>
                 <section className="content-header">
                     <SchemaTitle schema={schema} tableName={this.props.routeParams.table} />
                 </section>
