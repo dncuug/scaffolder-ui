@@ -40,3 +40,15 @@
     95% {left: 120%;}
     to {left: 100%;}
 }
+
+
+.table-layout-fixed {
+    table-layout: fixed;
+}
+
+.td-header-force-size {
+    text-overflow: ellipsis;
+    overflow: hidden;
+    white-space: nowrap;
+}
+

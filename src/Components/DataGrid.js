@@ -150,6 +150,7 @@ class DataGrid extends Component {
                             pagination={true}
                             ignoreSinglePage={true}
                             fetchInfo={{dataTotalSize: this.props.totalItemsCount}}
+                            tableHeaderClass='table-layout-fixed'
                             tableBodyClass='dataTable'
                             cellEdit={{mode: "dbclick", blurToSave: true}}
                             options={{
@@ -176,7 +177,8 @@ class DataGrid extends Component {
                         dataField={col.name}
                         dataFormat={formatter}
                         formatExtraData={col}
-                        width={col.type === COLUMN_TYPE.Integer ? '100' : null}
+                        className='td-header-force-size'
+
                         dataSort={true}>
                         {col.reference ? col.reference.table + ' ' +col.reference.textColumn : col.title}
                     </TableHeaderColumn>
