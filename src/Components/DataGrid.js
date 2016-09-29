@@ -3,29 +3,16 @@ import {BootstrapTable, TableHeaderColumn} from 'react-bootstrap-table';
 // import {Button, ButtonGroup, ButtonToolbar, FormControl, InputGroup, FormGroup} from 'react-bootstrap';
 import {Button} from 'react-bootstrap';
 import FontAwesome from 'react-fontawesome';
-import {getSchemaKey} from "../utils";
+import {getSchemaKey, COLUMN_TYPE} from "../utils";
 
 
+function stopPropagationHandler(e) {
+    e.stopPropagation()
+}
 
-const COLUMN_TYPE = {
-    Text: 10,
-    Email: 11,
-    Url: 12,
-    Phone: 13,
-    HTML: 14,
-    Password: 15,
-    Date: 20,
-    Time: 21,
-    DateTime: 22,
-    File: 30,
-    Integer: 40,
-    Double: 50,
-    Image: 60,
-    Binary: 70,
-    Lookup: 80,
-    Boolean: 90
-};
-
+const DefaultCell = ({value}) => (
+    <div>{typeof value === 'object' ? JSON.stringify(value) : value}</div>
+);
 const TimeCell = ({value}) => (
     <div>{new Date(value).toLocaleTimeString()}</div>
 );
@@ -45,10 +32,10 @@ const PasswordCell = ({value}) => (
     <div>*********</div>
 );
 const UrlCell = ({value}) => (
-    <a href={value}>{value}</a>
+    <a href={value} onClick={stopPropagationHandler}>{value}</a>
 );
 const EmailCell = ({value}) => (
-    <a href={`mailto:${value}`}>{value}</a>
+    <a href={`mailto:${value}`} onClick={stopPropagationHandler}>{value}</a>
 );
 const BooleanCell = ({value}) => (
     <input type="checkbox" readOnly value={value} />
@@ -68,7 +55,7 @@ const cellTypes = {
 };
 
 
-class ToolsColumnControl extends React.Component {
+class ToolsCell extends React.Component {
     componentDidMount() {
         if (this.props.indeterminate === true) {
             this._setIndeterminate(true);
@@ -93,7 +80,7 @@ class ToolsColumnControl extends React.Component {
     render() {
         const { rowIndex } = this.props;
         if (rowIndex === 'Header') {
-            return <input ref={(c) => this._input = c}
+            return <input ref={c => this._input = c}
                           type="checkbox"
                           checked={this.props.checked}
                           onChange={this.props.onChange} />
@@ -112,7 +99,9 @@ class ToolsColumnControl extends React.Component {
 class DataGrid extends Component {
 
     static propTypes = {
-        schema: React.PropTypes.object.isRequired,
+        schema: React.PropTypes.shape({
+            columns: React.PropTypes.array.isRequired,
+        }).isRequired,
         items: React.PropTypes.array.isRequired,
         totalItemsCount: React.PropTypes.number.isRequired,
         pageSize: React.PropTypes.number.isRequired,
@@ -124,24 +113,27 @@ class DataGrid extends Component {
     };
 
     render() {
-        const visibleColumns = (this.props.schema.columns || []).filter(col => col.showInGrid || col.isKey); // leave key field in table
+        const {schema} = this.props;
+        const visibleColumns = schema.columns.filter(col => col.showInGrid || col.isKey); // always leave key field in table
 
         const formatter = (cell, row, colSchema) => {
+            let value = cell;
             if (colSchema.reference) {
-                return row[`${colSchema.reference.table}_${colSchema.reference.textColumn}`];
+                value = row[`${colSchema.reference.table}_${colSchema.reference.textColumn}`];
             }
-            const CellComponent = cellTypes[colSchema.type];
-            return CellComponent ? <CellComponent value={cell} /> : cell
+            const CellComponent = cellTypes[colSchema.type] || DefaultCell;
+            return <CellComponent value={value} />
         };
 
         const onEditBtnClick = (rowIndex) => {
-            const keyField = getSchemaKey(this.props.schema);
+            const keyField = getSchemaKey(schema);
             const id = this.props.items[rowIndex][keyField];
             this.props.onEditClick(id);
         };
 
         return (
-            <BootstrapTable data={this.props.items}
+            <BootstrapTable key={schema.name}
+                            data={this.props.items}
                             remote={true}
                             search={true}
                             hover={true}
@@ -153,7 +145,7 @@ class DataGrid extends Component {
                                 clickToSelectAndEditCell: true,
                                 bgColor: '#f9f2f4',
                                 selected: [],
-                                customComponent: (props) => <ToolsColumnControl onEditBtnClick={onEditBtnClick} {...props} />
+                                customComponent: (props) => <ToolsCell onEditBtnClick={onEditBtnClick} {...props} />
                             }}
                             pagination={true}
                             ignoreSinglePage={true}

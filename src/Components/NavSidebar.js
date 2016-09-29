@@ -6,6 +6,7 @@ import {Link} from 'react-router';
 import {LoadingBar} from './index';
 
 import './Components.css';
+import {cancelAllGetRequests} from "../api";
 
 class NavLink extends Component {
     static contextTypes = {
@@ -17,7 +18,7 @@ class NavLink extends Component {
 
         return (
             <li className={isActive ? "active" : ""}>
-                <Link {...this.props}>
+                <Link {...this.props} onClick={cancelAllGetRequests}>
                     {this.props.children}
                 </Link>
             </li>

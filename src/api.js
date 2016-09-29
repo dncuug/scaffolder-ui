@@ -1,6 +1,6 @@
 import 'whatwg-fetch';
 
-const endPoint = 'http://localhost:5000'
+const endPoint = 'http://localhost:5000';
 
 /**
  * @return {string}
@@ -27,11 +27,6 @@ function defaultGet(relativeUrl) {
     return fetch(absoluteUrl(relativeUrl))
         .then(checkStatus)
         .then(parseJSON)
-        .then(json => {
-            // console.log('parsed json', json);
-            return json;
-        })
-        // .then(response => response)
         .catch(error => console.log('request failed', error))
 }
 

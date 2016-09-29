@@ -1,5 +1,5 @@
 import React, { Component } from 'react';
-import { DataGrid, LoadingBar } from '../Components';
+import { DataGrid, LoadingBar, EntityEditor } from '../Components';
 import { Grid, Row, Col } from 'react-bootstrap';
 
 import Promise from 'es6-promise';
@@ -22,29 +22,29 @@ const makeCancelable = (promise) => {
     };
 };
 
-const NoData = () => (
-    <div className="box-header">
-        <h3 className="box-title">No Data</h3>
-    </div>
-);
 
 class GridView extends Component {
 
     state = {
         isFetching: false,
-        schema: {},
+        schema: null,
         items: [],
-        totalItemsCount: 0
+        totalItemsCount: 0,
+        editEntity: null, // turns on edit mode if set
     };
 
     constructor(props) {
         super(props);
+        /* grid */
         this.onEditClick = this.onEditClick.bind(this);
         this.onCellEdit = this.onCellEdit.bind(this);
         this.onPageChange = this.onPageChange.bind(this);
         this.onSortChange = this.onSortChange.bind(this);
         this.onFilterChange = this.onFilterChange.bind(this);
         this.onSizePerPageList = this.onSizePerPageList.bind(this);
+        /* editor */
+        this.onEditorSaveClick = this.onEditorSaveClick.bind(this);
+        this.onEditorCancelClick = this.onEditorCancelClick.bind(this);
     }
 
     componentDidMount() {
@@ -59,7 +59,7 @@ class GridView extends Component {
 
     fetchInitialData(tableName) {
         this.cancelRequest();
-        this.setState({isFetching: true, schema: {}, items: []});
+        this.setState({isFetching: true, schema: null, items: [], editEntity: null});
         this._requestPromise = makeCancelable(Promise.all([
             getTable(tableName),
             select(tableName),
@@ -67,15 +67,6 @@ class GridView extends Component {
         this._requestPromise.promise.then(responses => {
             const selectData = responses[1];
             this.setState({schema: responses[0], ...selectData, isFetching: false});
-        });
-    }
-
-    fetchMoreData(filter) {
-        this.cancelRequest();
-        this.setState({isFetching: true});
-
-        select(this.state.schema.name, filter).then(response => {
-            this.setState({...response, isFetching: false})
         });
     }
 
@@ -90,9 +81,10 @@ class GridView extends Component {
     }
 
     onDeleteRow(ids) {
-        const promises = ids.map(id => remove(this.state.schema.name, id));
-        const keyField = getSchemaKey(this.props.schema);
+        const {schema} = this.state;
+        const promises = ids.map(id => remove(schema.name, id));
         Promise.all(promises).then(() => {
+            const keyField = getSchemaKey(schema);
             this.setState({
                 items: this.state.items.filter(item => ids.indexOf(item[keyField]) > -1),
                 totalItemsCount: this.state.totalItemsCount - ids.length
@@ -104,7 +96,7 @@ class GridView extends Component {
         this.setState({isFetching: true});
         select(this.state.schema.name, {
             sortColumn: this.state.sortColumn || '',
-            sortOrder: this.state.sortOrder | '',
+            sortOrder: this.state.sortOrder === 'desc' ? 1 : 0,
             currentPage: pageIndex,
             pageSize
         }).then(response => {
@@ -120,9 +112,8 @@ class GridView extends Component {
         select(this.state.schema.name, {
             currentPage: 1,
             sortColumn: sortName,
-            sortOrder
+            sortOrder: sortOrder === 'desc' ? 1 : 0,
         }).then(response => {
-            console.log(response);
             this.setState({
                 ...response,
                 sortColumn: sortName,
@@ -141,11 +132,21 @@ class GridView extends Component {
     }
 
     onEditClick(id) {
-        this.props.history.push(`/detail/${id}`);
+        // this.props.history.push(`/detail/${id}`);
+        const keyField = getSchemaKey(this.state.schema);
+        select(this.state.schema.name, {
+            detailMode: true,
+            Parameters: JSON.stringify({
+                table: this.state.schema.name,
+                [keyField]: id
+            })
+        }).then(response => {
+            this.setState({editEntity: response.items[0]})
+        });
     }
 
     onCellEdit(entity, colName, value) {
-        const keyField = getSchemaKey(this.props.schema);
+        const keyField = getSchemaKey(this.state.schema);
         const entityId = entity[keyField];
         const updatedEntity = {
             [keyField]: entityId,
@@ -162,24 +163,56 @@ class GridView extends Component {
         })
     }
 
+    onEditorSaveClick(data) {
+        const keyField = getSchemaKey(this.state.schema);
+        const entityId = data[keyField];
+        update(this.state.schema.name, data).then(() => {
+            const newItems = this.state.items.map(item => {
+                return item[keyField] === entityId ? data : item;
+            });
+            this.setState({items: newItems, editEntity: null})
+        });
+    }
+
+    onEditorCancelClick(e) {
+        if (e && e.preventDefault) {
+            e.preventDefault();
+        }
+        this.setState({editEntity: null})
+    }
+
     render() {
-        const { schema, isFetching, totalItemsCount } = this.state;
+        const { schema, isFetching, editEntity } = this.state;
+
+        const SchemaTitle = ({schema, tableName}) => {
+            if (!schema) return <h1>{tableName}</h1>;
+            return (
+                <h1>
+                    {schema.title}<br/>
+                    {schema.description && <small>{schema.description}</small>}
+                </h1>
+            )
+        };
 
         return (
             <div className="content-wrapper">
-                {/* Content Header (Page header) */}
                 <section className="content-header">
-                    <h1>{schema && schema.title ? schema.title : this.props.routeParams.table}</h1>
+                    <SchemaTitle schema={schema} tableName={this.props.routeParams.table} />
                 </section>
-                {/* Main content */}
                 <div className="content">
                     <Grid fluid={true}>
                         <Row>
                             <Col xs={12}>
                                 <div className="box">
                                     {isFetching && <LoadingBar />}
-                                    {totalItemsCount === 0 ? <NoData /> : (
-                                        <div className="box-body">
+                                    <div className="box-body">
+                                        {schema && editEntity && (
+                                            <EntityEditor schema={schema} entity={editEntity}
+                                                          onSave={this.onEditorSaveClick}
+                                                          onCancel={this.onEditorCancelClick} />
+
+                                        )}
+                                        {schema && !editEntity && (
                                             <DataGrid {...this.state}
                                                       onEditClick={this.onEditClick}
                                                       onDeleteRow={this.onDeleteRow}
@@ -189,8 +222,8 @@ class GridView extends Component {
                                                       onFilterChange={this.onFilterChange}
                                                       onSizePerPageList={this.onSizePerPageList}
                                             />
-                                        </div>
-                                    )}
+                                        )}
+                                    </div>
                                 </div>
                             </Col>
                         </Row>

@@ -1,8 +1,9 @@
 import React, { Component } from 'react';
 import FontAwesome from 'react-fontawesome';
 import {Nav, Navbar, NavItem, NavDropdown, MenuItem} from 'react-bootstrap';
-import { Link } from 'react-router';
-import { NavSidebar } from './Components';
+import {Link} from 'react-router';
+import {NavSidebar} from './Components';
+import {EmptyView} from './Containers';
 
 import { getTables } from './api'
 
@@ -29,11 +30,8 @@ class App extends Component {
         return (
             <div className={this.state.navCollapsed ? 'wrapper sidebar-mini sidebar-collapse' : 'wrapper'} style={{overflow: 'visible'}}>
                 <header className="main-header">
-                    {/* Logo */}
                     <Link to="/" className="logo">
-                        {/* mini logo for sidebar mini 50x50 pixels */}
                         <span className="logo-mini">Sca</span>
-                        {/* logo for regular state and mobile devices */}
                         <span className="logo-lg">Scaffolder</span>
                     </Link>
                     <Navbar staticTop={true} fluid={true}>
@@ -54,7 +52,7 @@ class App extends Component {
                 <NavSidebar tables={this.state.tables} />
                 {/* Content Wrapper. Contains page content */}
 
-                {this.props.children || <div className="content-wrapper" style={{minHeight: 500}}>Nothig Here</div>}
+                {this.props.children || <EmptyView />}
 
                 <footer className="main-footer">
                     <div className="pull-right hidden-xs">
