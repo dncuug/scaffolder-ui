@@ -2,7 +2,7 @@ import React from 'react';
 import ReactDOM from 'react-dom';
 import { Router, Route, browserHistory } from 'react-router'
 import App from './App';
-import { GridView } from './Containers';
+import { GridView, StorageView } from './Containers';
 
 import 'bootstrap.native';
 
@@ -18,6 +18,7 @@ ReactDOM.render(
     <Router history={browserHistory}>
         <Route path="/" component={App}>
             <Route path="grid/:table" component={GridView} />
+            <Route path="storage/" component={StorageView} />
             {/*<Route path="detail/:table/:id" component={DetailView} />*/}
             <Route path="*" component={NotFound} />
         </Route>

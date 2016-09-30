@@ -57,7 +57,7 @@ const COL_TO_PROP_WIDGET = {
     // [COLUMN_TYPE.Email]: {'ui:widget': ''},
     // [COLUMN_TYPE.Url]: {'ui:widget': ''},
     // [COLUMN_TYPE.Phone]: {},
-    [COLUMN_TYPE.HTML]: {'ui:widget': 'textarea'},
+    [COLUMN_TYPE.HTML]: {'ui:widget': 'html'},
     [COLUMN_TYPE.Password]: {'ui:widget': 'password'},
     // [COLUMN_TYPE.Date]: {'ui:widget': 'alt-date'},
     // [COLUMN_TYPE.Time]: {},

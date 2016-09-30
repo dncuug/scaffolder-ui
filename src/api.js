@@ -9,6 +9,25 @@ function absoluteUrl(part) {
     return endPoint + part;
 }
 
+let access_token;
+
+export function auth(login, password) {
+
+    const options = {
+        method: 'POST',
+        headers: new Headers({'Content-Type': 'application/x-www-form-urlencoded'}),
+        body: `username=${login}&password=${password}`,
+    };
+
+    return fetch(absoluteUrl('/token'), options)
+        .then(checkStatus)
+        .then(parseJSON)
+        .then(response => {
+            access_token = response.access_token;
+        });
+}
+
+
 function checkStatus(response) {
     if (response.status >= 200 && response.status < 300) {
         return response
@@ -24,7 +43,16 @@ function parseJSON(response) {
 }
 
 function defaultGet(relativeUrl) {
-    return fetch(absoluteUrl(relativeUrl))
+
+    const options = {
+        method: 'GET',
+        headers: new Headers({
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${access_token}`
+        })
+    };
+
+    return fetch(absoluteUrl(relativeUrl), options)
         .then(checkStatus)
         .then(parseJSON)
         .catch(error => console.log('request failed', error))
@@ -53,15 +81,20 @@ export function select(table, filter) {
 }
 
 export function insert(table, entity) {
-    const payload = {
-        tableName: table.name,
-        entity
+
+    const options = {
+        method: "POST",
+        headers: new Headers({
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${access_token}`
+        }),
+        body: JSON.stringify({
+            tableName: table.name,
+            entity
+        })
     };
 
-    return fetch(absoluteUrl('/data'), {
-            method: "POST",
-            body: JSON.stringify(payload)
-        })
+    return fetch(absoluteUrl('/data'), options)
         .then(checkStatus)
         .then(parseJSON)
         .then(response => response.data)
@@ -70,19 +103,19 @@ export function insert(table, entity) {
 
 export function update(table, entity) {
 
-    const payload = {
-        tableName: table,
-        entity
-    };
-    const headers = new Headers({
-        'Content-Type': 'application/json',
-    });
-
-    return fetch(absoluteUrl('/data'), {
-            method: "PUT",
-            headers,
-            body: JSON.stringify(payload)
+    const options = {
+        method: "PUT",
+        headers: new Headers({
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${access_token}`
+        }),
+        body: JSON.stringify({
+            tableName: table,
+            entity
         })
+    };
+
+    return fetch(absoluteUrl('/data'), options)
         .then(checkStatus)
         .then(parseJSON)
         .then(response => response.data)
@@ -91,15 +124,19 @@ export function update(table, entity) {
 
 export function remove(table, entity) {
 
-    const payload = {
-        tableName: table.name,
-        entity
+    const options = {
+        method: 'DELETE',
+        headers: new Headers({
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${access_token}`
+        }),
+        body: JSON.stringify({
+            tableName: table.name,
+            entity
+        })
     };
 
-    return fetch(absoluteUrl('/data'), {
-            method: 'DELETE',
-            body: JSON.stringify(payload)
-        })
+    return fetch(absoluteUrl('/data'), options)
         .then(checkStatus)
         .then(parseJSON)
         .then(response => response.data)

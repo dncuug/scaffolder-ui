@@ -83,30 +83,27 @@ class GridView extends Component {
     onDeleteRow(ids) {
         const {schema} = this.state;
         const promises = ids.map(id => remove(schema.name, id));
-        const timeout = setTimeout(() => {
-            this.setState({isFetching: true})
-        }, 500);
+        this.delayedShowLoading();
         Promise.all(promises).then(() => {
-            clearTimeout(timeout);
+            this.cancelDelayedLoading();
             const keyField = getSchemaKey(schema);
             this.setState({
                 items: this.state.items.filter(item => ids.indexOf(item[keyField]) > -1),
-                totalItemsCount: this.state.totalItemsCount - ids.length
+                totalItemsCount: this.state.totalItemsCount - ids.length,
+                isFetching: false
             });
         })
     }
 
     onPageChange(pageIndex, pageSize) {
-        const timeout = setTimeout(() => {
-            this.setState({isFetching: true})
-        }, 500);
+        this.delayedShowLoading();
         select(this.state.schema.name, {
             sortColumn: this.state.sortColumn || '',
             sortOrder: this.state.sortOrder === 'desc' ? 1 : 0,
             currentPage: pageIndex,
             pageSize
         }).then(response => {
-            clearTimeout(timeout);
+            this.cancelDelayedLoading();
             this.setState({
                 ...response,
                 isFetching: false
@@ -115,15 +112,13 @@ class GridView extends Component {
     }
 
     onSortChange(sortName, sortOrder) {
-        const timeout = setTimeout(() => {
-            this.setState({isFetching: true})
-        }, 500);
+        this.delayedShowLoading();
         select(this.state.schema.name, {
             currentPage: 1,
             sortColumn: sortName,
             sortOrder: sortOrder === 'desc' ? 1 : 0,
         }).then(response => {
-            clearTimeout(timeout);
+            this.cancelDelayedLoading();
             this.setState({
                 ...response,
                 sortColumn: sortName,
@@ -141,12 +136,19 @@ class GridView extends Component {
         // todo: for future use
     }
 
+    delayedShowLoading() {
+        this._fetchTimeout = setTimeout(() => {
+            this.setState({isFetching: true})
+        }, 500);
+    }
+    cancelDelayedLoading () {
+        clearTimeout(this._fetchTimeout);
+    }
+
     onEditClick(id) {
         // this.props.history.push(`/detail/${id}`);
         const keyField = getSchemaKey(this.state.schema);
-        const timeout = setTimeout(() => {
-            this.setState({isFetching: true})
-        }, 500);
+        this.delayedShowLoading();
         select(this.state.schema.name, {
             detailMode: true,
             Parameters: JSON.stringify({
@@ -154,7 +156,7 @@ class GridView extends Component {
                 [keyField]: id
             })
         }).then(response => {
-            clearTimeout(timeout);
+            this.cancelDelayedLoading();
             this.setState({editEntity: response.items[0], isFetching: false})
         });
     }
@@ -166,9 +168,7 @@ class GridView extends Component {
             [keyField]: entityId,
             [colName]: value
         };
-        const timeout = setTimeout(() => {
-            this.setState({isFetching: true})
-        }, 500);
+        this.delayedShowLoading();
         update(this.state.schema.name, updatedEntity).then(() => {
             const newItems = this.state.items.map(item => {
                 if (item[keyField] === entityId) {
@@ -176,7 +176,7 @@ class GridView extends Component {
                 }
                 return item;
             });
-            clearTimeout(timeout);
+            this.cancelDelayedLoading();
             this.setState({items: newItems, isFetching: false})
         })
     }
@@ -184,14 +184,12 @@ class GridView extends Component {
     onEditorSaveClick(data) {
         const keyField = getSchemaKey(this.state.schema);
         const entityId = data[keyField];
-        const timeout = setTimeout(() => {
-            this.setState({isFetching: true})
-        }, 500);
+        this.delayedShowLoading();
         update(this.state.schema.name, data).then(() => {
             const newItems = this.state.items.map(item => {
                 return item[keyField] === entityId ? data : item;
             });
-            clearTimeout(timeout);
+            this.cancelDelayedLoading();
             this.setState({items: newItems, editEntity: null, isFetching: false})
         });
     }

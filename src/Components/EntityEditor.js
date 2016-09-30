@@ -2,8 +2,13 @@ import React, {Component} from 'react';
 import Form from "react-jsonschema-form";
 import {Button, ButtonToolbar} from "react-bootstrap";
 import {convertToJSONAndUISchema} from "../utils";
+import {HTMLWidget} from "./widgets";
 
 
+
+const widgets = {
+    html: HTMLWidget
+};
 
 class EntityEditor extends Component {
 
@@ -33,6 +38,7 @@ class EntityEditor extends Component {
                   uiSchema={UISchema}
                   formData={entity}
                   liveValidate={true}
+                  widgets={widgets}
                   onSubmit={this.onSaveClick.bind(this)}>
                 <ButtonToolbar>
                     <Button type="submit" active bsStyle="info">Submit</Button>

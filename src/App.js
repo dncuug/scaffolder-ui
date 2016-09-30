@@ -5,7 +5,7 @@ import {Link} from 'react-router';
 import {NavSidebar} from './Components';
 import {EmptyView} from './Containers';
 
-import { getTables } from './api'
+import { getTables, auth} from './api'
 
 import './App.css';
 
@@ -23,7 +23,8 @@ class App extends Component {
         this.setState({isFetching: true});
         getTables().then(tables => {
             this.setState({tables, isFetching: false})
-        })
+        });
+        auth('admin', 'admin'); // todo: move to login form
     }
 
     render() {

@@ -151,6 +151,8 @@ class DataGrid extends Component {
                             ignoreSinglePage={true}
                             fetchInfo={{dataTotalSize: this.props.totalItemsCount}}
                             tableHeaderClass='table-layout-fixed'
+                            tableStyle={{overflowX: 'auto'}}
+
                             tableBodyClass='dataTable'
                             cellEdit={{mode: "dbclick", blurToSave: true}}
                             options={{

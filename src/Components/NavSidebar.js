@@ -63,7 +63,10 @@ class NavSidebar extends Component {
                                 <FontAwesome name="dashboard" /><span>Home</span>
                             </NavLink>
                             <NavLink to="/administration">
-                                <FontAwesome name="Administration"/><span>Administration</span>
+                                <FontAwesome name="sliders"/><span>Administration</span>
+                            </NavLink>
+                            <NavLink to="/storage">
+                                <FontAwesome name="upload"/><span>Upload File</span>
                             </NavLink>
                             <li className="header">Tables</li>
                             {!tables.length && <LoadingBar />}
