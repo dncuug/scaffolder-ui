@@ -6,7 +6,7 @@ class StorageView extends Component {
         return (
             <div className="content-wrapper">
                 <div className="content">
-                    strorage
+                    storage
                 </div>
             </div>
         )

@@ -1,9 +1,8 @@
 import React, { Component } from 'react';
 import FontAwesome from 'react-fontawesome';
-import {Nav, Navbar, NavItem, NavDropdown, MenuItem} from 'react-bootstrap';
-import {Link} from 'react-router';
+import {Nav, Navbar, NavItem} from 'react-bootstrap';
+import {Link, withRouter} from 'react-router';
 import {NavSidebar} from './Components';
-import {EmptyView} from './Containers';
 
 import { getTables, auth} from './api'
 
@@ -19,15 +18,43 @@ class App extends Component {
         navCollapsed: false,
     };
 
+    handleLogout() {
+        auth.logout();
+        this.props.router.replace('/login');
+    }
+
     componentDidMount() {
         this.setState({isFetching: true});
         getTables().then(tables => {
             this.setState({tables, isFetching: false})
         });
-        auth('admin', 'admin'); // todo: move to login form
+    }
+
+    componentWillReceiveProps(nextProps) {
+        if (this.state.tables && this.state.tables.length) {
+            return;
+        }
+
+        this.setState({isFetching: true});
+        getTables().then(tables => {
+            this.setState({tables, isFetching: false})
+        });
+
     }
 
     render() {
+        if (!auth.authenticated()) {
+            return (
+                <div className="container">
+                    <div className="col-md-6 col-md-offset-3">
+                        <div className="content">
+                            {this.props.children}
+                        </div>
+                    </div>
+                </div>
+            )
+        }
+
         return (
             <div className={this.state.navCollapsed ? 'wrapper sidebar-mini sidebar-collapse' : 'wrapper'} style={{overflow: 'visible'}}>
                 <header className="main-header">
@@ -42,18 +69,14 @@ class App extends Component {
                             </NavItem>
                         </Nav>
                         <Nav pullRight>
-                            <NavDropdown id="user-dropdown" eventKey={1} title="User Name">
-                                <MenuItem>Logout</MenuItem>
-                            </NavDropdown>
+                            <NavItem onClick={this.handleLogout.bind(this)}>Logout</NavItem>
                         </Nav>
                     </Navbar>
-                    {/*</nav>*/}
                 </header>
-                {/* Left side column. contains the logo and sidebar */}
-                <NavSidebar tables={this.state.tables} />
-                {/* Content Wrapper. Contains page content */}
 
-                {this.props.children || <EmptyView />}
+                <NavSidebar tables={this.state.tables} />
+
+                {this.props.children}
 
                 <footer className="main-footer">
                     <div className="pull-right hidden-xs">
@@ -67,5 +90,4 @@ class App extends Component {
 }
 
 
-
-export default App;
+export default withRouter(App);

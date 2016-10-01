@@ -9,23 +9,42 @@ function absoluteUrl(part) {
     return endPoint + part;
 }
 
-let access_token;
+export const auth = {
 
-export function auth(login, password) {
+    access_token: undefined,
 
-    const options = {
-        method: 'POST',
-        headers: new Headers({'Content-Type': 'application/x-www-form-urlencoded'}),
-        body: `username=${login}&password=${password}`,
-    };
+    authenticated() {
+        return Boolean(auth.access_token);
+    },
 
-    return fetch(absoluteUrl('/token'), options)
-        .then(checkStatus)
-        .then(parseJSON)
-        .then(response => {
-            access_token = response.access_token;
-        });
-}
+    authorized() {
+        return Boolean(auth.access_token);
+    },
+
+    login(login, password) {
+        const options = {
+            method: 'POST',
+            headers: new Headers({'Content-Type': 'application/x-www-form-urlencoded'}),
+            body: `username=${login}&password=${password}`,
+        };
+
+        return fetch(absoluteUrl('/token'), options)
+            .then(checkStatus)
+            .then(parseJSON)
+            .then(response => {
+                auth.access_token = response.access_token;
+                localStorage.token = auth.access_token;
+            });
+    },
+
+    logout() {
+        auth.access_token = undefined;
+        localStorage.removeItem('token');
+    }
+};
+
+auth.access_token = localStorage.token;
+
 
 
 function checkStatus(response) {
@@ -48,7 +67,7 @@ function defaultGet(relativeUrl) {
         method: 'GET',
         headers: new Headers({
             'Content-Type': 'application/json',
-            'Authorization': `Bearer ${access_token}`
+            'Authorization': `Bearer ${auth.access_token}`
         })
     };
 
@@ -86,7 +105,7 @@ export function insert(table, entity) {
         method: "POST",
         headers: new Headers({
             'Content-Type': 'application/json',
-            'Authorization': `Bearer ${access_token}`
+            'Authorization': `Bearer ${auth.access_token}`
         }),
         body: JSON.stringify({
             tableName: table.name,
@@ -107,7 +126,7 @@ export function update(table, entity) {
         method: "PUT",
         headers: new Headers({
             'Content-Type': 'application/json',
-            'Authorization': `Bearer ${access_token}`
+            'Authorization': `Bearer ${auth.access_token}`
         }),
         body: JSON.stringify({
             tableName: table,
@@ -128,7 +147,7 @@ export function remove(table, entity) {
         method: 'DELETE',
         headers: new Headers({
             'Content-Type': 'application/json',
-            'Authorization': `Bearer ${access_token}`
+            'Authorization': `Bearer ${auth.access_token}`
         }),
         body: JSON.stringify({
             tableName: table.name,
